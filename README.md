@@ -1,92 +1,195 @@
-# embedded-i2c-sht3x
+# Sensirion I2C SHT3X embedded Library
+
+This document explains how to set up a sensor of the SHT3X family to run on an embedded device using the I²C interface.
+
+<img src="images/SHT3x.png" width="300px">
+
+Click [here](https://sensirion.com/products/catalog/SHT30-DIS-B) to learn more about the Sensirion SHT3X sensor family.
+
+
+Not all sensors of this driver family support all measurements.
+In case a measurement is not supported by all sensors, the products that
+support it are listed in the API description.
 
 
 
-## Getting started
+## Supported sensor types
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+| Sensor name   | I²C Addresses  |
+| ------------- | -------------- |
+|[SHT30A](https://sensirion.com/products/catalog/SHT30A-DIS-B)| **0x44**, 0x45|
+|[SHT30](https://sensirion.com/products/catalog/SHT30-DIS-B)| **0x44**, 0x45|
+|[SHT31A](https://sensirion.com/products/catalog/SHT31A-DIS-B)| **0x44**, 0x45|
+|[SHT31](https://sensirion.com/products/catalog/SHT31-DIS-B)| **0x44**, 0x45|
+|[SHT33](https://sensirion.com/products/catalog/SHT33-DIS)| **0x44**, 0x45|
+|[SHT35A](https://sensirion.com/products/catalog/SHT35A-DIS-B)| **0x44**, 0x45|
+|[SHT35](https://sensirion.com/products/catalog/SHT35-DIS-B)| **0x44**, 0x45|
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+The following instructions and examples use a *SHT30*.
 
-## Add your files
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+
+## Setup Guide
+
+### Connecting the Sensor
+
+Your sensor has 4 different signals that need to be connected to your board: SDA, GND, SCL, VDD.
+Use the following pins to connect your SHT3X:
+
+<img src="images/SHT3x_pinout.png" width="300px">
+
+| *Pin* | *Cable Color* | *Name* | *Description*  | *Comments* |
+|-------|---------------|:------:|----------------|------------|
+| 1 | green | SDA | I2C: Serial data input / output | 
+| 2 | black | GND | Ground | 
+| 3 | yellow | SCL | I2C: Serial clock input | 
+| 4 | red | VDD | Supply Voltage | 2.15V to 5.5V
+
+
+
+The recommended voltage is 3.3V.
+
+### Configure the code
+
+In order to use the provided code we need to adjust two files according to your platform.
+
+### Edit `sensirion_i2c_hal.c`
+
+This file contains the implementation of the sensor communication, which
+depends on your hardware platform. We provide function stubs for your
+hardware's own implementation.
+Sample implementations are available for some platforms:
+[`sample-implementations`](sample-implementations). For Linux based platforms
+like Raspberry Pi you can just replace the unimplemented HAL template with the
+implementation in `sample-implementations/linux_user_space/`:
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.sensirion.lokal/MSO-SW/drivers/embedded/embedded-i2c-sht3x.git
-git branch -M master
-git push -uf origin master
+cp sample-implementations/linux_user_space/sensirion_i2c_hal.c ./
 ```
 
-## Integrate with your tools
+### Edit `sensirion_config.h`
 
-- [ ] [Set up project integrations](https://gitlab.sensirion.lokal/MSO-SW/drivers/embedded/embedded-i2c-sht3x/-/settings/integrations)
+Skip this part for Linux based platforms since everything is already setup for
+this case.
 
-## Collaborate with your team
+Otherwise you need to check if the libraries `<stdint.h>` and `<stdlib.h>` are
+provided by your toolchain, compiler or system. If you have no idea on how to
+do that you can skip this step for now and come back when you get errors
+related to these names when compiling the driver.
+The features we use from those libraries are type definitions for integer sizes
+from `<stdint.h>` and `NULL` from `<stdlib.h>`. If they are not available you
+need to specify the following integer types yourself:
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+* `int64_t` = signed 64bit integer
+* `uint64_t` = unsigned 64bit integer
+* `int32_t` = signed 32bit integer
+* `uint32_t` = unsigned 32bit integer
+* `int16_t` = signed 16bit integer
+* `uint16_t` = unsigned 16bit integer
+* `int8_t` = signed 8bit integer
+* `uint8_t` = unsigned 8bit integer
 
-## Test and Deploy
+In addition to that you will need to specify `NULL`. For both we have a
+detailed template where you just need to fill in your system specific values.
 
-Use the built-in continuous integration in GitLab.
+## Choose the i2c address to use with your product
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+The provided example is working with a SHT30, I²C address 0x44.
+In order to use the code with another product or I²C address you need to change it in the call sht3x_init(ADDRESS) in
+`sht3x_i2c_example_usage.c`. The list of supported I²C-addresses is found in the header 
+`sht3x_i2c.h`.
 
-***
 
-# Editing this README
+Now we are ready to compile and run the example usage for your sensor.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+## Compile and Run
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+Pass the source `.c` and header `.h` files in this folder into your C compiler
+and run the resulting binary. This step may vary, depending on your platform.
+Here we demonstrate the procedure for Linux based platforms:
 
-## Name
-Choose a self-explaining name for your project.
+1. Open up a terminal.
+2. Navigate to the directory where this README is located.
+3. Navigate to the subdirectory example-usage.
+4. Run `make` (this compiles the example code into one executable binary).
+5. Run the compiled executable with `./sht3x_i2c_example_usage`
+6. Now you should see the first measurement values appear in your terminal. As
+   a next step you can adjust the example usage file or write your own main
+   function to use the sensor.
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+## Compile and Run Tests
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+The testframekwork used is CppUTest. Pass the source `.cpp`, `.c`  and header `.h`
+files from the tests and top level folder into your CPP compiler and run the
+resulting binary. This step may vary, depending on your platform.
+Here we demonstrate the procedure for Linux based platforms:
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+1. Open up a terminal.
+2. Install CppUTest framework `apt install cpputest`.
+3. Navigate to the directory `tests`.
+4. Run `make` (this compiles the test code into one executable binary).
+5. Run the compiled executable with `./sht3x_test_hw_i2c`.
+6. Now you should see the test output on your console.
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+# Background
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+## Files
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+### sensirion\_i2c.[ch]
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+In these files you can find the implementation of the I2C protocol used by
+Sensirion sensors. The functions in these files are used by the embedded driver
+to build the correct frame out of data to be sent to the sensor or receive a
+frame of data from the sensor and convert it back to data readable by your
+machine. The functions in here calculate and check CRCs, reorder bytes for
+different byte orders and build the correct formatted frame for your sensor.
+
+### sensirion\_i2c\_hal.[ch]
+
+These files contain the implementation of the hardware abstraction layer used
+by Sensirion's I2C embedded drivers. This part of the code is specific to the
+underlying hardware platform. This is an unimplemented template for the user to
+implement. In the `sample-implementations/` folder we provide implementations
+for the most common platforms.
+
+### sensirion\_config.h
+
+In this file we keep all the included libraries for our drivers and global
+defines. Next to `sensirion_i2c_hal.c` *it's the only file you should need to
+edit to get your driver working.*
+
+### sensirion\_common.[ch]
+
+In these files you can find some helper functions used by Sensirion's embedded
+drivers. It mostly contains byte order conversions for different variable
+types. These functions are also used by the UART embedded drivers therefore
+they are kept in their own file.
 
 ## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+**Contributions are welcome!**
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+We develop and test this driver using our company internal tools (version
+control, continuous integration, code review etc.) and automatically
+synchronize the master branch with GitHub. But this doesn't mean that we don't
+respond to issues or don't accept pull requests on GitHub. In fact, you're very
+welcome to open issues or create pull requests :)
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+This Sensirion library uses
+[`clang-format`](https://releases.llvm.org/download.html) to standardize the
+formatting of all our `.c` and `.h` files. Make sure your contributions are
+formatted accordingly:
 
-## License
-For open source projects, say how it is licensed.
+The `-i` flag will apply the format changes to the files listed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+```bash
+clang-format -i *.c *.h
+```
+
+Note that differences from this formatting will result in a failed build until
+they are fixed.
+
+
+# License
+
+See [LICENSE](LICENSE).
