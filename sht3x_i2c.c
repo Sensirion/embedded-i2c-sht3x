@@ -3,7 +3,7 @@
  *
  * Generator:     sensirion-driver-generator 0.33.0
  * Product:       sht3x
- * Model-Version: 1.0.0
+ * Model-Version: 2.0.0
  */
 /*
  * Copyright (c) 2023, Sensirion AG
@@ -49,73 +49,6 @@ static uint8_t _i2c_address;
 
 void sht3x_init(uint8_t i2c_address) {
     _i2c_address = i2c_address;
-}
-
-float signal_temperature(uint16_t temperature_ticks) {
-    float temperature = 0.0;
-    temperature = (float)(temperature_ticks);
-    temperature = -45 + ((temperature * 175.0) / 65535.0);
-    return temperature;
-}
-
-float signal_humidity(uint16_t humidity_ticks) {
-    float humidity = 0.0;
-    humidity = (float)(humidity_ticks);
-    humidity = (100 * humidity) / 65535.0;
-    return humidity;
-}
-
-int16_t sht3x_measure_single_shot(repeatability measurement_repeatability,
-                                  bool is_clock_stretching,
-                                  float* a_temperature, float* a_humidity) {
-    uint16_t raw_temp = 0;
-    uint16_t raw_humi = 0;
-    int16_t local_error = 0;
-    if (is_clock_stretching) {
-        if (measurement_repeatability == REPEATABILITY_HIGH) {
-            local_error =
-                sht3x_measure_single_shot_high_repeatability_clock_stretching(
-                    &raw_temp, &raw_humi);
-            if (local_error != NO_ERROR) {
-                return local_error;
-            }
-        } else if (measurement_repeatability == REPEATABILITY_MEDIUM) {
-            local_error =
-                sht3x_measure_single_shot_medium_repeatability_clock_stretching(
-                    &raw_temp, &raw_humi);
-            if (local_error != NO_ERROR) {
-                return local_error;
-            }
-        } else if (measurement_repeatability == REPEATABILITY_LOW) {
-            local_error =
-                sht3x_measure_single_shot_low_repeatability_clock_stretching(
-                    &raw_temp, &raw_humi);
-            if (local_error != NO_ERROR) {
-                return local_error;
-            }
-        }
-    } else if (measurement_repeatability == REPEATABILITY_HIGH) {
-        local_error =
-            sht3x_measure_single_shot_high_repeatability(&raw_temp, &raw_humi);
-        if (local_error != NO_ERROR) {
-            return local_error;
-        }
-    } else if (measurement_repeatability == REPEATABILITY_MEDIUM) {
-        local_error = sht3x_measure_single_shot_medium_repeatability(&raw_temp,
-                                                                     &raw_humi);
-        if (local_error != NO_ERROR) {
-            return local_error;
-        }
-    } else if (measurement_repeatability == REPEATABILITY_LOW) {
-        local_error =
-            sht3x_measure_single_shot_low_repeatability(&raw_temp, &raw_humi);
-        if (local_error != NO_ERROR) {
-            return local_error;
-        }
-    }
-    *a_temperature = signal_temperature(raw_temp);
-    *a_humidity = signal_humidity(raw_humi);
-    return local_error;
 }
 
 int16_t
@@ -209,35 +142,6 @@ sht3x_start_periodic_measurement(repeatability measurement_repeatability,
             }
         }
     }
-    return local_error;
-}
-
-int16_t sht3x_blocking_read_measurement(float* a_temperature,
-                                        float* a_humidity) {
-    uint16_t status = 0u;
-    uint16_t data_ready_flag = 0u;
-    uint16_t raw_temp = 0;
-    uint16_t raw_humi = 0;
-    int16_t local_error = 0;
-    local_error = ll_sht3x_read_status_register(&status);
-    if (local_error != NO_ERROR) {
-        return local_error;
-    }
-    data_ready_flag = (status >> 6) & 15;
-    while (data_ready_flag == 0) {
-        sensirion_hal_sleep_us(100000);
-        local_error = ll_sht3x_read_status_register(&status);
-        if (local_error != NO_ERROR) {
-            return local_error;
-        }
-        data_ready_flag = (status >> 6) & 15;
-    }
-    local_error = sht3x_read_measurement(&raw_temp, &raw_humi);
-    if (local_error != NO_ERROR) {
-        return local_error;
-    }
-    *a_temperature = signal_temperature(raw_temp);
-    *a_humidity = signal_humidity(raw_humi);
     return local_error;
 }
 
