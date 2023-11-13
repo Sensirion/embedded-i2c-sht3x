@@ -51,6 +51,67 @@ void sht3x_init(uint8_t i2c_address) {
     _i2c_address = i2c_address;
 }
 
+int32_t signal_temperature(uint16_t temperature_ticks) {
+    return ((21875 * (int32_t)temperature_ticks) >> 13) - 45000;
+}
+
+int32_t signal_humidity(uint16_t humidity_ticks) {
+    return ((12500 * (int32_t)humidity_ticks) >> 13);
+}
+
+int16_t sht3x_measure_single_shot(repeatability measurement_repeatability,
+                                  bool is_clock_stretching,
+                                  int32_t* a_temperature, int32_t* a_humidity) {
+    uint16_t raw_temp = 0;
+    uint16_t raw_humi = 0;
+    int16_t local_error = 0;
+    if (is_clock_stretching) {
+        if (measurement_repeatability == REPEATABILITY_HIGH) {
+            local_error =
+                sht3x_measure_single_shot_high_repeatability_clock_stretching(
+                    &raw_temp, &raw_humi);
+            if (local_error != NO_ERROR) {
+                return local_error;
+            }
+        } else if (measurement_repeatability == REPEATABILITY_MEDIUM) {
+            local_error =
+                sht3x_measure_single_shot_medium_repeatability_clock_stretching(
+                    &raw_temp, &raw_humi);
+            if (local_error != NO_ERROR) {
+                return local_error;
+            }
+        } else if (measurement_repeatability == REPEATABILITY_LOW) {
+            local_error =
+                sht3x_measure_single_shot_low_repeatability_clock_stretching(
+                    &raw_temp, &raw_humi);
+            if (local_error != NO_ERROR) {
+                return local_error;
+            }
+        }
+    } else if (measurement_repeatability == REPEATABILITY_HIGH) {
+        local_error =
+            sht3x_measure_single_shot_high_repeatability(&raw_temp, &raw_humi);
+        if (local_error != NO_ERROR) {
+            return local_error;
+        }
+    } else if (measurement_repeatability == REPEATABILITY_MEDIUM) {
+        local_error = sht3x_measure_single_shot_medium_repeatability(&raw_temp,
+                                                                     &raw_humi);
+        if (local_error != NO_ERROR) {
+            return local_error;
+        }
+    } else if (measurement_repeatability == REPEATABILITY_LOW) {
+        local_error =
+            sht3x_measure_single_shot_low_repeatability(&raw_temp, &raw_humi);
+        if (local_error != NO_ERROR) {
+            return local_error;
+        }
+    }
+    *a_temperature = signal_temperature(raw_temp);
+    *a_humidity = signal_humidity(raw_humi);
+    return local_error;
+}
+
 int16_t
 sht3x_start_periodic_measurement(repeatability measurement_repeatability,
                                  mps messages_per_second) {
@@ -142,6 +203,35 @@ sht3x_start_periodic_measurement(repeatability measurement_repeatability,
             }
         }
     }
+    return local_error;
+}
+
+int16_t sht3x_blocking_read_measurement(int32_t* a_temperature,
+                                        int32_t* a_humidity) {
+    uint16_t status = 0u;
+    uint16_t data_ready_flag = 0u;
+    uint16_t raw_temp = 0;
+    uint16_t raw_humi = 0;
+    int16_t local_error = 0;
+    local_error = ll_sht3x_read_status_register(&status);
+    if (local_error != NO_ERROR) {
+        return local_error;
+    }
+    data_ready_flag = (status >> 6) & 15;
+    while (data_ready_flag == 0) {
+        sensirion_hal_sleep_us(100000);
+        local_error = ll_sht3x_read_status_register(&status);
+        if (local_error != NO_ERROR) {
+            return local_error;
+        }
+        data_ready_flag = (status >> 6) & 15;
+    }
+    local_error = sht3x_read_measurement(&raw_temp, &raw_humi);
+    if (local_error != NO_ERROR) {
+        return local_error;
+    }
+    *a_temperature = signal_temperature(raw_temp);
+    *a_humidity = signal_humidity(raw_humi);
     return local_error;
 }
 

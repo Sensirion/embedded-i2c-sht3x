@@ -64,5 +64,23 @@ int main(void) {
         printf("error executing start_periodic_measurement(): %i\n", error);
         return error;
     }
+    int32_t a_temperature = 0.0;
+    int32_t a_humidity = 0.0;
+    uint16_t repetition = 0;
+    for (repetition = 0; repetition < 50; repetition++) {
+        error = sht3x_blocking_read_measurement(&a_temperature, &a_humidity);
+        if (error != NO_ERROR) {
+            printf("error executing blocking_read_measurement(): %i\n", error);
+            continue;
+        }
+        printf("a_temperature [milli degC]: %i ", a_temperature);
+        printf("a_humidity [milli RH]: %i\n", a_humidity);
+    }
+
+    error = sht3x_stop_measurement();
+    if (error != NO_ERROR) {
+        return error;
+    }
+
     return NO_ERROR;
 }

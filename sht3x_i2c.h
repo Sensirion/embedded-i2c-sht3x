@@ -115,6 +115,39 @@ typedef enum {
 void sht3x_init(uint8_t i2c_address);
 
 /**
+ * @brief Convert temperature ticks to physical value (approximation)
+ *
+ * @param[in] temperature_ticks
+ *
+ * @return temperature in milli degrees celsius
+ */
+int32_t signal_temperature(uint16_t temperature_ticks);
+
+/**
+ * @brief Convert humidity ticks to physical value (approximation)
+ *
+ * @param[in] humidity_ticks
+ *
+ * @return relative humidity in milli percent RH
+ */
+int32_t signal_humidity(uint16_t humidity_ticks);
+
+/**
+ * @brief Single shot measurement with the specified properties
+ *
+ * @param[in] measurement_repeatability The repeatability of the periodic
+ * measurement
+ * @param[in] is_clock_stretching Toggle clock stretching
+ * @param[out] a_temperature Measured temperature in milli degree celsius
+ * @param[out] a_humidity Measured humidity in milli percent RH
+ *
+ * @return error_code 0 on success, an error code otherwise.
+ */
+int16_t sht3x_measure_single_shot(repeatability measurement_repeatability,
+                                  bool is_clock_stretching,
+                                  int32_t* a_temperature, int32_t* a_humidity);
+
+/**
  * @brief sht3x_start_periodic_measurement
  *
  * Start the periodic measurement measurement mode.
@@ -132,6 +165,22 @@ void sht3x_init(uint8_t i2c_address);
 int16_t
 sht3x_start_periodic_measurement(repeatability measurement_repeatability,
                                  mps messages_per_second);
+
+/**
+ * @brief sht3x_blocking_read_measurement
+ *
+ * This is a convenience method that combines polling the data ready flag and
+ * reading out the data. As the minimal measurement interval is 2s and we sleep
+ * for 100ms we iterate at most 200 times. Note that this is blocking the system
+ * for a considerable amount of time!
+ *
+ * @param[out] a_temperature Measured temperature in milli degree celsius
+ * @param[out] a_humidity Measured humidity in milli percent RH
+ *
+ * @return error_code 0 on success, an error code otherwise.
+ */
+int16_t sht3x_blocking_read_measurement(int32_t* a_temperature,
+                                        int32_t* a_humidity);
 
 /**
  * @brief Read the contents of the status register

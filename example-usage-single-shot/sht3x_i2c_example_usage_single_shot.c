@@ -58,20 +58,18 @@ int main(void) {
         return error;
     }
     printf("a_status_register: %02x\n", a_status_register);
-    uint16_t temperature_ticks = 0;
-    uint16_t humidity_ticks = 0;
+    int32_t a_temperature = 0;
+    int32_t a_humidity = 0;
     uint16_t repetition = 0;
     for (repetition = 0; repetition < 50; repetition++) {
-        error = sht3x_measure_single_shot_medium_repeatability(
-            &temperature_ticks, &humidity_ticks);
+        error = sht3x_measure_single_shot(REPEATABILITY_MEDIUM, false,
+                                          &a_temperature, &a_humidity);
         if (error != NO_ERROR) {
-            printf("error executing "
-                   "measure_single_shot_medium_repeatability(): %i\n",
-                   error);
+            printf("error executing measure_single_shot(): %i\n", error);
             continue;
         }
-        printf("temperature_ticks: %u ", temperature_ticks);
-        printf("humidity_ticks: %u\n", humidity_ticks);
+        printf("a_temperature  [milli degC]: %i ", a_temperature);
+        printf("a_humidity  [milli RH]: %i\n", a_humidity);
     }
 
     return NO_ERROR;
