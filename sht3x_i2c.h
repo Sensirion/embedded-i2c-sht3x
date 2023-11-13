@@ -3,7 +3,7 @@
  *
  * Generator:     sensirion-driver-generator 0.33.0
  * Product:       sht3x
- * Model-Version: 1.0.0
+ * Model-Version: 2.0.0
  */
 /*
  * Copyright (c) 2023, Sensirion AG
@@ -58,6 +58,7 @@ extern "C" {
 #define SHT35A_I2C_ADDR_45 0x45
 #define SHT35_I2C_ADDR_44 0x44
 #define SHT35_I2C_ADDR_45 0x45
+#define SHT85_I2C_ADDR_44 0x44
 
 typedef enum {
     MEASURE_SINGLE_SHOT_HIGH_REPEATABILITY_CMD_ID = 0x2400,
@@ -114,23 +115,22 @@ typedef enum {
 void sht3x_init(uint8_t i2c_address);
 
 /**
- * @brief signal_temperature
+ * @brief Convert temperature ticks to physical value (approximation)
  *
  * @param[in] temperature_ticks
  *
- * @return Converted from ticks to degrees celsius by -45 + (175 * value /
- * 65535)
+ * @return temperature in milli degrees celsius
  */
-float signal_temperature(uint16_t temperature_ticks);
+int32_t signal_temperature(uint16_t temperature_ticks);
 
 /**
- * @brief signal_humidity
+ * @brief Convert humidity ticks to physical value (approximation)
  *
  * @param[in] humidity_ticks
  *
- * @return Converted from ticks to relative humidity by 100 * value / 65535
+ * @return relative humidity in milli percent RH
  */
-float signal_humidity(uint16_t humidity_ticks);
+int32_t signal_humidity(uint16_t humidity_ticks);
 
 /**
  * @brief Single shot measurement with the specified properties
@@ -138,16 +138,14 @@ float signal_humidity(uint16_t humidity_ticks);
  * @param[in] measurement_repeatability The repeatability of the periodic
  * measurement
  * @param[in] is_clock_stretching Toggle clock stretching
- * @param[out] a_temperature Converted from ticks to degrees celsius by -45 +
- * (175 * value / 65535)
- * @param[out] a_humidity Converted from ticks to relative humidity by 100 *
- * value / 65535
+ * @param[out] a_temperature Measured temperature in milli degree celsius
+ * @param[out] a_humidity Measured humidity in milli percent RH
  *
  * @return error_code 0 on success, an error code otherwise.
  */
 int16_t sht3x_measure_single_shot(repeatability measurement_repeatability,
                                   bool is_clock_stretching,
-                                  float* a_temperature, float* a_humidity);
+                                  int32_t* a_temperature, int32_t* a_humidity);
 
 /**
  * @brief sht3x_start_periodic_measurement
@@ -176,15 +174,13 @@ sht3x_start_periodic_measurement(repeatability measurement_repeatability,
  * for 100ms we iterate at most 200 times. Note that this is blocking the system
  * for a considerable amount of time!
  *
- * @param[out] a_temperature Converted from ticks to degrees celsius by -45 +
- * (175 * value / 65535)
- * @param[out] a_humidity Converted from ticks to relative humidity by 100 *
- * value / 65535
+ * @param[out] a_temperature Measured temperature in milli degree celsius
+ * @param[out] a_humidity Measured humidity in milli percent RH
  *
  * @return error_code 0 on success, an error code otherwise.
  */
-int16_t sht3x_blocking_read_measurement(float* a_temperature,
-                                        float* a_humidity);
+int16_t sht3x_blocking_read_measurement(int32_t* a_temperature,
+                                        int32_t* a_humidity);
 
 /**
  * @brief Read the contents of the status register

@@ -3,7 +3,7 @@
  *
  * Generator:     sensirion-driver-generator 0.33.0
  * Product:       sht3x
- * Model-Version: 1.0.0
+ * Model-Version: 2.0.0
  */
 /*
  * Copyright (c) 2023, Sensirion AG
@@ -51,23 +51,17 @@ void sht3x_init(uint8_t i2c_address) {
     _i2c_address = i2c_address;
 }
 
-float signal_temperature(uint16_t temperature_ticks) {
-    float temperature = 0.0;
-    temperature = (float)(temperature_ticks);
-    temperature = -45 + ((temperature * 175.0) / 65535.0);
-    return temperature;
+int32_t signal_temperature(uint16_t temperature_ticks) {
+    return ((21875 * (int32_t)temperature_ticks) >> 13) - 45000;
 }
 
-float signal_humidity(uint16_t humidity_ticks) {
-    float humidity = 0.0;
-    humidity = (float)(humidity_ticks);
-    humidity = (100 * humidity) / 65535.0;
-    return humidity;
+int32_t signal_humidity(uint16_t humidity_ticks) {
+    return ((12500 * (int32_t)humidity_ticks) >> 13);
 }
 
 int16_t sht3x_measure_single_shot(repeatability measurement_repeatability,
                                   bool is_clock_stretching,
-                                  float* a_temperature, float* a_humidity) {
+                                  int32_t* a_temperature, int32_t* a_humidity) {
     uint16_t raw_temp = 0;
     uint16_t raw_humi = 0;
     int16_t local_error = 0;
@@ -212,8 +206,8 @@ sht3x_start_periodic_measurement(repeatability measurement_repeatability,
     return local_error;
 }
 
-int16_t sht3x_blocking_read_measurement(float* a_temperature,
-                                        float* a_humidity) {
+int16_t sht3x_blocking_read_measurement(int32_t* a_temperature,
+                                        int32_t* a_humidity) {
     uint16_t status = 0u;
     uint16_t data_ready_flag = 0u;
     uint16_t raw_temp = 0;

@@ -24,6 +24,7 @@ support it are listed in the API description.
 |[SHT33](https://sensirion.com/products/catalog/SHT33-DIS)| **0x44**, 0x45|
 |[SHT35A](https://sensirion.com/products/catalog/SHT35A-DIS-B)| **0x44**, 0x45|
 |[SHT35](https://sensirion.com/products/catalog/SHT35-DIS-B)| **0x44**, 0x45|
+|[SHT85](https://sensirion.com/sht85/)| **0x44**|
 
 The following instructions and examples use a *SHT30*.
 

@@ -3,7 +3,7 @@
  *
  * Generator:     sensirion-driver-generator 0.33.0
  * Product:       sht3x
- * Model-Version: 1.0.0
+ * Model-Version: 2.0.0
  */
 /*
  * Copyright (c) 2023, Sensirion AG
@@ -58,8 +58,8 @@ int main(void) {
         return error;
     }
     printf("a_status_register: %02x\n", a_status_register);
-    float a_temperature = 0.0;
-    float a_humidity = 0.0;
+    int32_t a_temperature = 0;
+    int32_t a_humidity = 0;
     uint16_t repetition = 0;
     for (repetition = 0; repetition < 50; repetition++) {
         error = sht3x_measure_single_shot(REPEATABILITY_MEDIUM, false,
@@ -68,8 +68,8 @@ int main(void) {
             printf("error executing measure_single_shot(): %i\n", error);
             continue;
         }
-        printf("a_temperature: %.2f ", a_temperature);
-        printf("a_humidity: %.2f\n", a_humidity);
+        printf("a_temperature  [milli degC]: %i ", a_temperature);
+        printf("a_humidity  [milli RH]: %i\n", a_humidity);
     }
 
     return NO_ERROR;
