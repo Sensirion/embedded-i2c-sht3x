@@ -596,7 +596,7 @@ int16_t sht3x_start_measurement_10_mps_low_repeatability() {
     uint8_t* buffer_ptr = communication_buffer;
     uint16_t local_offset = 0;
     local_offset =
-        sensirion_i2c_add_command16_to_buffer(buffer_ptr, local_offset, 0x273a);
+        sensirion_i2c_add_command16_to_buffer(buffer_ptr, local_offset, 0x272a);
     local_error =
         sensirion_i2c_write_data(_i2c_address, buffer_ptr, local_offset);
     if (local_error != NO_ERROR) {
